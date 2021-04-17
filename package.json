@@ -11,6 +11,14 @@
   "author": "",
   "license": "GPL-3.0-or-later",
   "devDependencies": {
+    "@types/dotenv": "^8.2.0",
+    "@types/node": "^14.14.41",
     "typescript": "^4.2.4"
+  },
+  "dependencies": {
+    "@typeit/discord": "^4.0.9",
+    "discord.js": "^12.5.3",
+    "dotenv": "^8.2.0",
+    "tslib": "^2.2.0"
   }
 }

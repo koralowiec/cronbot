@@ -1,21 +1,24 @@
+import {Client} from "@typeit/discord";
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import {Client} from "@typeit/discord";
 
-async function start() {
-    const client = new Client({
-        classes: [
-            `${__dirname}/*Discord.ts`, // glob string to load the classes
-            `${__dirname}/*Discord.js` // If you compile using "tsc" the file extension change to .js
-        ],
-        silent: false,
-        variablesChar: ":"
-    });
+export class Main {
+	private static _client: Client;
 
-    const token = process.env.TOKEN;
+	static get Client(): Client {
+		return this._client;
+	}
 
-    await client.login(token);
+	static start() {
+		this._client = new Client();
+		const token = process.env.TOKEN
+		this._client.login(
+			token,
+			`${__dirname}/DiscordApp.ts`,
+			`${__dirname}/DiscordApp.js`
+		);
+	}
 }
 
-start();
+Main.start();

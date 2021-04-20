@@ -3,7 +3,12 @@ image: docker:19
 services:
   - docker:19-dind
 
+
+before_script:
+  - docker login -u $DH_USER -p $DH_TOKEN
+
 build:
   stage: build
   script:
     - docker build -t koralowiec/cronbot .
+    - docker push koralowiec/cronbot

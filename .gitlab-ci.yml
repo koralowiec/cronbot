@@ -5,7 +5,7 @@ services:
 
 
 before_script:
-  - docker login -u $DH_USER -p $DH_TOKEN
+  - echo $DH_TOKEN | docker login -u $DH_USER
 
 build:
   stage: build

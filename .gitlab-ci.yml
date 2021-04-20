@@ -1,0 +1,9 @@
+docker:19
+
+services:
+  - docker:19-dind
+
+build:
+  stage: build
+  script:
+    - docker build -t koralowiec/cronbot .

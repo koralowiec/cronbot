@@ -1,4 +1,4 @@
-docker:19
+image: docker:19
 
 services:
   - docker:19-dind

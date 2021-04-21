@@ -1,4 +1,5 @@
 import {
+    Client,
     Command,
     CommandMessage
 } from "@typeit/discord";
@@ -11,7 +12,10 @@ interface ParsedMessage {
 
 export abstract class Cron {
     @Command("new :name")
-    async new(command: CommandMessage) {
+    async new(command: CommandMessage, client: Client) {
+        const channelId = command.channel.id;
+        const guildId = command.guild.id;
+        console.log(guildId, channelId);
         const {name} = command.args
         const message = command.toString()
         const parseMessage = this.parseMessage(name, message)
@@ -19,6 +23,7 @@ export abstract class Cron {
             command.reply(parseMessage.cronMessage)
         }
         newJob(parseMessage.cronExpression, callback)
+        console.log(await client.channels.fetch(channelId));
     }
 
     parseMessage(name: string, message: string): ParsedMessage {

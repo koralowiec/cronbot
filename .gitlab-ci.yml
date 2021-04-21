@@ -10,5 +10,5 @@ before_script:
 build:
   stage: build
   script:
-    - docker build -t koralowiec/cronbot .
+    - docker build -t koralowiec/cronbot --target base .
     - docker push koralowiec/cronbot

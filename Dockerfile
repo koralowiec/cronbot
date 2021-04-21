@@ -1,4 +1,4 @@
-FROM node:14-alpine
+FROM node:14-alpine as base
 
 RUN mkdir /bot && chown node:node /bot
 
@@ -15,3 +15,9 @@ COPY --chown=node:node . ./
 RUN npm run build
 
 CMD ["node", "dist/index.js"]
+
+FROM base as dev
+
+RUN npm i -D
+
+CMD ["npx", "nodemon", "src/index.ts"]

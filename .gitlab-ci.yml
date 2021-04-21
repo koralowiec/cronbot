@@ -9,6 +9,9 @@ before_script:
 
 build:
   stage: build
+  only:
+    refs:
+      - master
   script:
     - docker build -t koralowiec/cronbot --target base .
     - docker push koralowiec/cronbot

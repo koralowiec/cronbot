@@ -4,6 +4,11 @@ services:
     build:
       context: .
       target: dev
-    env_file: .env
+    env_file: 
+      - .env
+      - .db.env
     volumes:
       - ./src:/bot/src
+  pg:
+    image: postgres:12.6
+    env_file: .db.env

@@ -1,5 +1,6 @@
 import {Client} from "@typeit/discord";
 import * as dotenv from "dotenv";
+import {getConnection} from "./db/connection";
 dotenv.config();
 
 const onShutdown = () => {
@@ -27,5 +28,14 @@ export class Main {
         );
     }
 }
+
+(async () => {
+    try {
+        await getConnection()
+    } catch (e) {
+        console.error(e);
+        onShutdown()
+    }
+})()
 
 Main.start();

@@ -17,6 +17,6 @@ export class CronJob extends BaseEntity {
     @Column()
     channelId: number;
 
-    @Column()
+    @Column({default: true})
     isActive: boolean;
 }

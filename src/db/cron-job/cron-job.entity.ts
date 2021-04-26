@@ -6,16 +6,19 @@ export class CronJob extends BaseEntity {
     id: number;
 
     @Column()
+    name: string;
+
+    @Column()
     cronExpression: string;
 
     @Column()
     cronMessage: string;
 
     @Column()
-    guildId: number;
+    guildId: string;
 
     @Column()
-    channelId: number;
+    channelId: string;
 
     @Column({default: true})
     isActive: boolean;

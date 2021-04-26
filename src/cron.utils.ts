@@ -1,6 +1,6 @@
 import * as cron from "node-cron";
 
-const jobs: cron.ScheduledTask[] = []
+let jobs = []
 
 const validate = (cronExpression: string): boolean => {
     return cron.validate(cronExpression)
@@ -10,7 +10,7 @@ const schedule = (cronExpression: string, callback: () => void): cron.ScheduledT
     return cron.schedule(cronExpression, callback)
 }
 
-export const newJob = (cronExpression: string, callback: () => void) => {
+export const newJob = (cronExpression: string, id: number, callback: () => void) => {
     const isValid = validate(cronExpression)
     if (!isValid) {
         console.error("Not valid");
@@ -18,5 +18,17 @@ export const newJob = (cronExpression: string, callback: () => void) => {
     }
 
     const job = schedule(cronExpression, callback)
-    jobs.push(job)
+    jobs.push({...job, id})
+}
+
+export const removeInactiveJob = (id: number) => {
+    const jobToUnshedule = jobs.filter(j => j.id === id)
+    if (jobToUnshedule.length > 0) {
+        const job = jobToUnshedule[0]
+        console.log("job", job);
+        job.stop()
+    }
+
+    const filteredJobs = jobs.filter(j => j.id !== id)
+    jobs = filteredJobs
 }

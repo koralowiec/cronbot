@@ -5,6 +5,7 @@ import {
 import {Main} from "..";
 import {newJob, removeInactiveJob} from "../cron.utils";
 import {CronJobDto} from "../db/cron-job/cron-job.dto";
+import {CronJob} from "../db/cron-job/cron-job.entity";
 import {CronJobRepository} from "../db/cron-job/cron-job.repository";
 
 interface ParsedMessage {
@@ -45,7 +46,6 @@ export abstract class Cron {
 
     @Command("active :name :isActive")
     async active(command: CommandMessage) {
-        // const channelId = command.channel.id;
         const guildId = command.guild.id;
         const {name, isActive} = command.args
         const isActiveBool = isActive === "true"
@@ -71,6 +71,30 @@ export abstract class Cron {
         const cronJob = await this._cronJobRepository.findByNameAndGuild(name, guildId)
         const cronJobInfo = `\nName: ${cronJob.name}\nCron expression: ${cronJob.cronExpression}\nMessage: ${cronJob.cronMessage}\nActive: ${cronJob.isActive}`
         command.reply(cronJobInfo)
+    }
+
+    @Command("list")
+    async list(command: CommandMessage) {
+        const guildId = command.guild.id;
+        const cronJobs = await this._cronJobRepository.findByGuildId(guildId)
+        let listMessage = "Cron jobs:"
+        for (const job of cronJobs) {
+            const channelId = job.channelId
+            const channel = command.guild.channels.cache.find(c => c.id === channelId)
+            const channelName = channel.name
+
+            listMessage = `${listMessage}\n ${job.name} on channel: ${channelName}`
+        }
+
+        command.reply(listMessage)
+    }
+
+    @Command("remove :name")
+    async remove(command: CommandMessage) {
+        const guildId = command.guild.id;
+        const {name} = command.args
+        const removedCronJob = await this._cronJobRepository.removeOne(name, guildId)
+        command.reply(`Removed the cron job named ${removedCronJob.name}`)
     }
 
     parseMessage(name: string, message: string): ParsedMessage {

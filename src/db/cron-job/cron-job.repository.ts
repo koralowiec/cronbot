@@ -32,4 +32,17 @@ export class CronJobRepository extends Repository<CronJob> {
     findAllActive(): Promise<CronJob[]> {
         return this.find({isActive: true})
     }
+
+    findByGuildId(guildId: string): Promise<CronJob[]> {
+        return this.find({guildId})
+    }
+
+    async removeOne(name: string, guildId: string): Promise<CronJob> {
+        let cronJob = await this.findByNameAndGuild(name, guildId)
+        if (!cronJob) {
+            throw new Error(`Could not find the cron job with name: ${name} and guildId: ${guildId}`)
+        }
+
+        return this.remove(cronJob)
+    }
 }

@@ -5,7 +5,6 @@ import {
 import {Main} from "..";
 import {newJob, removeInactiveJob} from "../cron.utils";
 import {CronJobDto} from "../db/cron-job/cron-job.dto";
-import {CronJob} from "../db/cron-job/cron-job.entity";
 import {CronJobRepository} from "../db/cron-job/cron-job.repository";
 
 interface ParsedMessage {
@@ -93,8 +92,9 @@ export abstract class Cron {
     async remove(command: CommandMessage) {
         const guildId = command.guild.id;
         const {name} = command.args
-        const removedCronJob = await this._cronJobRepository.removeOne(name, guildId)
-        command.reply(`Removed the cron job named ${removedCronJob.name}`)
+        const {removedJob, id} = await this._cronJobRepository.removeOne(name, guildId)
+        command.reply(`Removed the cron job named ${removedJob.name}`)
+        removeInactiveJob(id)
     }
 
     parseMessage(name: string, message: string): ParsedMessage {

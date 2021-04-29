@@ -25,7 +25,6 @@ export const removeInactiveJob = (id: number) => {
     const jobToUnshedule = jobs.filter(j => j.id === id)
     if (jobToUnshedule.length > 0) {
         const job = jobToUnshedule[0]
-        console.log("job", job);
         job.stop()
     }
 

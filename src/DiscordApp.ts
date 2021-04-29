@@ -5,8 +5,12 @@ import {
     CommandNotFound,
 } from "@typeit/discord";
 
-// The prefix will be applied to the imported commands
-@Discord("!cron ", {
+async function getPrefix() {
+    const middlePrefix = process.env.PREFIX || "cron"
+    return `!${middlePrefix} `
+}
+
+@Discord(getPrefix, {
     import: [
         Path.join(__dirname, "commands", "*.ts"),
         Path.join(__dirname, "commands", "*.js")

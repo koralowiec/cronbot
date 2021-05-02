@@ -1,6 +1,8 @@
 import {
+    Client,
     Command,
-    CommandMessage
+    CommandMessage,
+    Description
 } from "@typeit/discord";
 import {Main} from "..";
 import {newJob, removeInactiveJob} from "../cron.utils";
@@ -21,6 +23,7 @@ export abstract class Cron {
     }
 
     @Command("new :name")
+    @Description("Create a new cron job (the job will \"belong\" to the channel the command was run). Example: !cron new *job_name* \"Message that will be send by bot every minute on this channel\" \"* * * * *\"")
     async new(command: CommandMessage) {
         const channelId = command.channel.id;
         const guildId = command.guild.id;
@@ -44,13 +47,14 @@ export abstract class Cron {
     }
 
     @Command("active :name :isActive")
+    @Description("Enable (true) or disable (false) the cron job. Example: !cron active *job_name* false")
     async active(command: CommandMessage) {
         const guildId = command.guild.id;
         const {name, isActive} = command.args
         const isActiveBool = isActive === "true"
 
         const cronJob = await this._cronJobRepository.changeActiveState(isActiveBool, name, guildId)
-        command.reply(`\nActive: ${cronJob.isActive}`)
+        command.reply(` Active: ${cronJob.isActive}`)
 
         if (!isActiveBool) {
             removeInactiveJob(cronJob.id)
@@ -63,16 +67,18 @@ export abstract class Cron {
     }
 
     @Command("info :name")
+    @Description("Shows information about the cron job. Example: !cron info *job_name*")
     async info(command: CommandMessage) {
         const guildId = command.guild.id;
         const {name} = command.args
 
         const cronJob = await this._cronJobRepository.findByNameAndGuild(name, guildId)
-        const cronJobInfo = `\nName: ${cronJob.name}\nCron expression: ${cronJob.cronExpression}\nMessage: ${cronJob.cronMessage}\nActive: ${cronJob.isActive}`
+        const cronJobInfo = ` Name: ${cronJob.name} Cron expression: ${cronJob.cronExpression} Message: ${cronJob.cronMessage} Active: ${cronJob.isActive}`
         command.reply(cronJobInfo)
     }
 
     @Command("list")
+    @Description("Lists all cron jobs that belongs to this channel. Example: !cron list")
     async list(command: CommandMessage) {
         const guildId = command.guild.id;
         const cronJobs = await this._cronJobRepository.findByGuildId(guildId)
@@ -82,19 +88,35 @@ export abstract class Cron {
             const channel = command.guild.channels.cache.find(c => c.id === channelId)
             const channelName = channel.name
 
-            listMessage = `${listMessage}\n ${job.name} on channel: ${channelName}`
+            listMessage = `${listMessage}  ${job.name} on channel: ${channelName}`
         }
 
         command.reply(listMessage)
     }
 
     @Command("remove :name")
+    @Description("Remove the cron job. Example: !cron remove *job_name*")
     async remove(command: CommandMessage) {
         const guildId = command.guild.id;
         const {name} = command.args
         const {removedJob, id} = await this._cronJobRepository.removeOne(name, guildId)
         command.reply(`Removed the cron job named ${removedJob.name}`)
         removeInactiveJob(id)
+    }
+
+    @Command("help")
+    @Description("Show the basic info about available commands. Example: !cron help")
+    async help(command: CommandMessage) {
+        const commands = Client.getCommands()
+        let helpMessage = "Help:"
+        commands.forEach((c) => {
+            const subcommand = c.commandName.toString().split(" ")[0]
+            const desc = c.description.toString()
+
+            helpMessage = `${helpMessage}\n**${subcommand}** ${desc}`
+        })
+
+        command.reply(helpMessage)
     }
 
     parseMessage(name: string, message: string): ParsedMessage {

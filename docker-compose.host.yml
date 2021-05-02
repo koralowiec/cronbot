@@ -1,0 +1,23 @@
+version: "3.8"
+services:
+  bot:
+    image: koralowiec/cronbot
+    env_file: 
+      - .env
+      - .db.env
+    depends_on:
+      pg:
+        condition: service_healthy 
+  pg:
+    image: postgres:12.6
+    env_file: .db.env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+ 
+volumes:
+  pgdata:

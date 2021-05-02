@@ -5,9 +5,9 @@ import {
     Description
 } from "@typeit/discord";
 import {Main} from "..";
-import {newJob, removeInactiveJob} from "../cron.utils";
-import {CronJobDto} from "../db/cron-job/cron-job.dto";
-import {CronJobRepository} from "../db/cron-job/cron-job.repository";
+import {newJob, removeInactiveJob} from "./cron.utils";
+import {CronJobDto} from "./cron-job.dto";
+import {CronJobRepository} from "./cron-job.repository";
 
 interface ParsedMessage {
     cronMessage: string;

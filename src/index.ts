@@ -2,9 +2,9 @@ import {Client} from "@typeit/discord";
 import {TextChannel} from "discord.js";
 import * as dotenv from "dotenv";
 import {Connection} from "typeorm";
-import {newJob} from "./cron.utils";
+import {newJob} from "./cron/cron.utils";
 import {getConnection} from "./db/connection";
-import {CronJobRepository} from "./db/cron-job/cron-job.repository";
+import {CronJobRepository} from "./cron/cron-job.repository";
 dotenv.config();
 
 const onShutdown = () => {

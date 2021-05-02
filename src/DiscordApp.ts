@@ -12,13 +12,13 @@ async function getPrefix() {
 
 @Discord(getPrefix, {
     import: [
-        Path.join(__dirname, "commands", "*.ts"),
-        Path.join(__dirname, "commands", "*.js")
+        Path.join(__dirname, "./**/", "*.command.ts"),
+        Path.join(__dirname, "./**/", "*.command.js")
     ]
 })
 export abstract class DiscordApp {
     @CommandNotFound()
-    notFoundAasd(command: CommandMessage) {
+    notFound(command: CommandMessage) {
         command.reply("Command not found");
     }
 }

@@ -1,6 +1,6 @@
 import {Connection, createConnection} from "typeorm";
-import {CronJob} from "./cron-job/cron-job.entity";
-import {CronJobRepository} from "./cron-job/cron-job.repository";
+import {CronJob} from "../cron/cron-job.entity";
+import {CronJobRepository} from "../cron/cron-job.repository";
 
 const host: string = process.env.POSTGRES_HOST
 const port: number = parseInt(process.env.POSTGRES_PORT)

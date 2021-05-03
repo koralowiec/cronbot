@@ -15,3 +15,5 @@ build:
   script:
     - docker build -t koralowiec/cronbot:$CI_COMMIT_REF_NAME --target base .
     - docker push koralowiec/cronbot:$CI_COMMIT_REF_NAME
+    - docker tag koralowiec/cronbot:$CI_COMMIT_REF_NAME koralowiec/cronbot:latest
+    - docker push koralowiec/cronbot:latest

@@ -11,7 +11,7 @@ build:
   stage: build
   only:
     refs:
-      - master
+      - tags
   script:
-    - docker build -t koralowiec/cronbot --target base .
-    - docker push koralowiec/cronbot
+    - docker build -t koralowiec/cronbot:$CI_COMMIT_REF_NAME --target base .
+    - docker push koralowiec/cronbot:$CI_COMMIT_REF_NAME

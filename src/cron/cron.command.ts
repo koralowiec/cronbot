@@ -5,13 +5,20 @@ import {
     Description
 } from "@typeit/discord";
 import {Main} from "..";
-import {newJob, removeInactiveJob} from "./cron.utils";
+import {newJob, removeInactiveJob, updateCronMessage} from "./cron.utils";
 import {CronJobDto} from "./cron-job.dto";
 import {CronJobRepository} from "./cron-job.repository";
+import {CronJob} from "./cron-job.entity";
 
 interface ParsedMessage {
     cronMessage: string;
     cronExpression: string;
+}
+
+enum ParsingMessageMode {
+    MessageOnly,
+    ExpressionOnly,
+    Both,
 }
 
 export abstract class Cron {
@@ -73,8 +80,20 @@ export abstract class Cron {
         const {name} = command.args
 
         const cronJob = await this._cronJobRepository.findByNameAndGuild(name, guildId)
-        const cronJobInfo = ` Name: ${cronJob.name} Cron expression: ${cronJob.cronExpression} Message: ${cronJob.cronMessage} Active: ${cronJob.isActive}`
+        const cronJobInfo = `\nName: ${cronJob.name} \nCron expression: ${cronJob.cronExpression} \nMessage: ${cronJob.cronMessage} \nActive: ${cronJob.isActive}`
         command.reply(cronJobInfo)
+    }
+
+    @Command("edit msg :name")
+    @Description("Edit the cron job's message. Example: !cron edit msg *job_name* \"New message\"")
+    async editMessage(command: CommandMessage) {
+        this.edit(command, ParsingMessageMode.MessageOnly)
+    }
+
+    @Command("edit exp :name")
+    @Description("Edit the cron job's expression. Example: !cron edit exp *job_name* \"*/5 * * * *\"")
+    async editExpression(command: CommandMessage) {
+        this.edit(command, ParsingMessageMode.ExpressionOnly)
     }
 
     @Command("list")
@@ -119,13 +138,52 @@ export abstract class Cron {
         command.reply(helpMessage)
     }
 
-    parseMessage(name: string, message: string): ParsedMessage {
+    async edit(command: CommandMessage, mode: ParsingMessageMode) {
+        const guildId = command.guild.id;
+        const {name} = command.args
+        const message = command.toString()
+        const {cronMessage, cronExpression} = this.parseMessage(name, message, mode)
+
+        let updatedCronJob: CronJob
+        let replyMessage = `Updated cron job: ${name}`
+        if (mode == ParsingMessageMode.MessageOnly) {
+            updatedCronJob = await this._cronJobRepository.updateMessage(name, guildId, cronMessage)
+            replyMessage = `${replyMessage} - set message to: ${updatedCronJob.cronMessage}`
+        } else if (mode == ParsingMessageMode.ExpressionOnly) {
+            updatedCronJob = await this._cronJobRepository.updateExpression(name, guildId, cronExpression)
+            replyMessage = `${replyMessage} - set expression to: ${updatedCronJob.cronExpression}`
+        }
+
+        const callback = () => {
+            command.channel.send(updatedCronJob.cronMessage)
+        }
+        updateCronMessage(updatedCronJob.id, updatedCronJob.cronExpression, callback)
+        command.reply(replyMessage)
+    }
+
+    parseMessage(name: string, message: string, mode: ParsingMessageMode = ParsingMessageMode.Both): ParsedMessage {
         const nameIndex = message.indexOf(name)
         let sliced = message.slice(nameIndex)
         sliced = sliced.slice(name.length + 1)
         const splitted = sliced.split('"')
-        const cronMessage = splitted[1]
-        const cronExpression = splitted[3]
+
+        let cronMessage: string
+        let cronExpression: string
+        switch (mode) {
+            case ParsingMessageMode.MessageOnly: {
+                cronMessage = splitted[1]
+                break;
+            }
+            case ParsingMessageMode.ExpressionOnly: {
+                cronExpression = splitted[1]
+                break;
+            }
+            case ParsingMessageMode.Both:
+            default: {
+                cronMessage = splitted[1]
+                cronExpression = splitted[3]
+            }
+        }
         return {cronMessage, cronExpression}
     }
 }

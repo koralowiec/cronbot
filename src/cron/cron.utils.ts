@@ -31,3 +31,8 @@ export const removeInactiveJob = (id: number) => {
     const filteredJobs = jobs.filter(j => j.id !== id)
     jobs = filteredJobs
 }
+
+export const updateCronMessage = (id: number, expression: string, callback: () => void) => {
+    removeInactiveJob(id)
+    newJob(expression, id, callback)
+}

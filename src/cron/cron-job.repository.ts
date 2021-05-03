@@ -48,4 +48,24 @@ export class CronJobRepository extends Repository<CronJob> {
 
         return {removedJob, id}
     }
+
+    async updateMessage(name: string, guildId: string, newMessage: string): Promise<CronJob> {
+        let cronJob = await this.findByNameAndGuild(name, guildId)
+        if (!cronJob) {
+            throw new Error(`Could not find the cron job with name: ${name} and guildId: ${guildId}`)
+        }
+
+        cronJob.cronMessage = newMessage
+        return cronJob.save()
+    }
+
+    async updateExpression(name: string, guildId: string, newExpression: string): Promise<CronJob> {
+        let cronJob = await this.findByNameAndGuild(name, guildId)
+        if (!cronJob) {
+            throw new Error(`Could not find the cron job with name: ${name} and guildId: ${guildId}`)
+        }
+
+        cronJob.cronExpression = newExpression
+        return cronJob.save()
+    }
 }

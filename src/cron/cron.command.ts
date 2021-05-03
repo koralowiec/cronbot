@@ -5,9 +5,9 @@ import {
     Description
 } from "@typeit/discord";
 import {Main} from "..";
-import {newJob, removeInactiveJob, updateCronMessage} from "./cron.utils";
+import {newJob, NotValidCronExpression, removeInactiveJob, updateCronMessage, validateCronExpression} from "./cron.utils";
 import {CronJobDto} from "./cron-job.dto";
-import {CronJobRepository} from "./cron-job.repository";
+import {CronJobRepository, NotFoundError} from "./cron-job.repository";
 import {CronJob} from "./cron-job.entity";
 
 interface ParsedMessage {
@@ -47,10 +47,19 @@ export abstract class Cron {
 
         const cronJob = await this._cronJobRepository.createOne(cronJobDto)
 
+
         const callback = () => {
             command.channel.send(parseMessage.cronMessage)
         }
-        newJob(parseMessage.cronExpression, cronJob.id, callback)
+        try {
+            newJob(parseMessage.cronExpression, cronJob.id, callback)
+        } catch (e) {
+            if (e instanceof NotValidCronExpression) {
+                command.reply(e.message)
+                await this._cronJobRepository.removeOne(cronJob.name, cronJob.guildId)
+            }
+            return
+        }
     }
 
     @Command("active :name :isActive")
@@ -60,7 +69,19 @@ export abstract class Cron {
         const {name, isActive} = command.args
         const isActiveBool = isActive === "true"
 
-        const cronJob = await this._cronJobRepository.changeActiveState(isActiveBool, name, guildId)
+        let cronJob: CronJob
+
+        try {
+            cronJob = await this._cronJobRepository.changeActiveState(isActiveBool, name, guildId)
+        } catch (e) {
+            if (e instanceof NotFoundError) {
+                command.reply(e.message)
+            } else {
+                command.reply("Unknown error occured! :cry:")
+            }
+            return
+        }
+
         command.reply(` Active: ${cronJob.isActive}`)
 
         if (!isActiveBool) {
@@ -79,7 +100,17 @@ export abstract class Cron {
         const guildId = command.guild.id;
         const {name} = command.args
 
-        const cronJob = await this._cronJobRepository.findByNameAndGuild(name, guildId)
+        let cronJob: CronJob
+        try {
+            cronJob = await this._cronJobRepository.findByNameAndGuild(name, guildId)
+        } catch (e) {
+            if (e instanceof NotFoundError) {
+                command.reply(e.message)
+            } else {
+                command.reply("Unknown error occured! :cry:")
+            }
+            return
+        }
         const cronJobInfo = `\nName: ${cronJob.name} \nCron expression: ${cronJob.cronExpression} \nMessage: ${cronJob.cronMessage} \nActive: ${cronJob.isActive}`
         command.reply(cronJobInfo)
     }
@@ -100,14 +131,26 @@ export abstract class Cron {
     @Description("Lists all cron jobs that belongs to this channel. Example: !cron list")
     async list(command: CommandMessage) {
         const guildId = command.guild.id;
-        const cronJobs = await this._cronJobRepository.findByGuildId(guildId)
+
+        let cronJobs: CronJob[]
+        try {
+            cronJobs = await this._cronJobRepository.findByGuildId(guildId)
+        } catch (e) {
+            if (e instanceof NotFoundError) {
+                command.reply(e.message)
+            } else {
+                command.reply("Unknown error occured! :cry:")
+            }
+            return
+        }
+
         let listMessage = "Cron jobs:"
         for (const job of cronJobs) {
             const channelId = job.channelId
             const channel = command.guild.channels.cache.find(c => c.id === channelId)
             const channelName = channel.name
 
-            listMessage = `${listMessage}  ${job.name} on channel: ${channelName}`
+            listMessage = `${listMessage}\n${job.name} on channel: ${channelName}`
         }
 
         command.reply(listMessage)
@@ -118,7 +161,20 @@ export abstract class Cron {
     async remove(command: CommandMessage) {
         const guildId = command.guild.id;
         const {name} = command.args
-        const {removedJob, id} = await this._cronJobRepository.removeOne(name, guildId)
+
+        let cronJob
+        try {
+            cronJob = await this._cronJobRepository.removeOne(name, guildId)
+        } catch (e) {
+            if (e instanceof NotFoundError) {
+                command.reply(e.message)
+            } else {
+                command.reply("Unknown error occured! :cry:")
+            }
+            return
+        }
+
+        const {removedJob, id} = cronJob
         command.reply(`Removed the cron job named ${removedJob.name}`)
         removeInactiveJob(id)
     }
@@ -144,13 +200,37 @@ export abstract class Cron {
         const message = command.toString()
         const {cronMessage, cronExpression} = this.parseMessage(name, message, mode)
 
+        const isValid = validateCronExpression(cronExpression)
+        if (!isValid) {
+            command.reply(`Cron expression: "${cronExpression}" is not valid!`)
+            return
+        }
+
         let updatedCronJob: CronJob
         let replyMessage = `Updated cron job: ${name}`
         if (mode == ParsingMessageMode.MessageOnly) {
-            updatedCronJob = await this._cronJobRepository.updateMessage(name, guildId, cronMessage)
+            try {
+                updatedCronJob = await this._cronJobRepository.updateMessage(name, guildId, cronMessage)
+            } catch (e) {
+                if (e instanceof NotFoundError) {
+                    command.reply(e.message)
+                } else {
+                    command.reply("Unknown error occured! :cry:")
+                }
+                return
+            }
             replyMessage = `${replyMessage} - set message to: ${updatedCronJob.cronMessage}`
         } else if (mode == ParsingMessageMode.ExpressionOnly) {
-            updatedCronJob = await this._cronJobRepository.updateExpression(name, guildId, cronExpression)
+            try {
+                updatedCronJob = await this._cronJobRepository.updateExpression(name, guildId, cronExpression)
+            } catch (e) {
+                if (e instanceof NotFoundError) {
+                    command.reply(e.message)
+                } else {
+                    command.reply("Unknown error occured! :cry:")
+                }
+                return
+            }
             replyMessage = `${replyMessage} - set expression to: ${updatedCronJob.cronExpression}`
         }
 

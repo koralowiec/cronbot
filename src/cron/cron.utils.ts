@@ -2,7 +2,14 @@ import * as cron from "node-cron";
 
 let jobs = []
 
-const validate = (cronExpression: string): boolean => {
+export class NotValidCronExpression extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "NotValidCronExpression"
+    }
+}
+
+export const validateCronExpression = (cronExpression: string): boolean => {
     return cron.validate(cronExpression)
 }
 
@@ -11,10 +18,9 @@ const schedule = (cronExpression: string, callback: () => void): cron.ScheduledT
 }
 
 export const newJob = (cronExpression: string, id: number, callback: () => void) => {
-    const isValid = validate(cronExpression)
+    const isValid = validateCronExpression(cronExpression)
     if (!isValid) {
-        console.error("Not valid");
-        return
+        throw new NotValidCronExpression(`This: "${cronExpression}" is not valid cron expression!`)
     }
 
     const job = schedule(cronExpression, callback)
